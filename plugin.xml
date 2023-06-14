@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="pluginid" version="1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android"><name>CordovaFacePlugin</name>
+<js-module name="CordovaFacePlugin" src="www/CordovaFacePlugin.js"><clobbers target="cordova.plugins.CordovaFacePlugin" /></js-module><platform name="android"><config-file parent="/*" target="res/xml/config.xml"><feature name="CordovaFacePlugin"><param name="android-package" value="pluginid.CordovaFacePlugin" /></feature></config-file><config-file parent="/*" target="AndroidManifest.xml"></config-file>
+    <framework src="src/android/faceplugin.gradle" custom="true" type="gradleReference"/>
+    <source-file src="src/android/CordovaFacePlugin.java" target-dir="src/pluginid/CordovaFacePlugin" />
+    <source-file src="src/android/FacePassAndroidSDK.aar" target-dir="libs" />
+
+    <source-file src="src/android/attr.age_gender.arm.B.bin" target-dir="assets" />
+    <source-file src="src/android/attr.eye_oc.arm.A.bin" target-dir="assets" />
+    <source-file src="src/android/attr.occlusion.arm.20201209.bin" target-dir="assets" />
+    <source-file src="src/android/attr.pose_blur.arm.190630.bin" target-dir="assets" />
+    <source-file src="src/android/attr.RC.arm.G.bin" target-dir="assets" />
+    <source-file src="src/android/attr.smile.arm.200815.bin" target-dir="assets" />
+    <source-file src="src/android/detector_rect.arm.G.bin" target-dir="assets" />
+    <source-file src="src/android/detector.arm.G.bin" target-dir="assets" />
+    <source-file src="src/android/feat2.aml.manta.bin" target-dir="assets" />
+    <source-file src="src/android/feat2.arm.K.v1.0_1core.bin" target-dir="assets" />
+    <source-file src="src/android/feat3.rk3399.model0.inp112.int8.small.v1.0.bin" target-dir="assets" />
+    <source-file src="src/android/liveness.CPU.rgb.G.bin" target-dir="assets" />
+    <source-file src="src/android/liveness.CPU.rgbir.ga_case.A.bin" target-dir="assets" />
+    <source-file src="src/android/liveness.CPU.rgbir.I.bin" target-dir="assets" />
+    <source-file src="src/android/liveness.GPU.rgbir.ga_case.A.bin" target-dir="assets" />
+    <source-file src="src/android/liveness.GPU.rgbir.I.bin" target-dir="assets" />
+    <source-file src="src/android/liveness.GPU.rgbir.I.cache" target-dir="assets" />
+    <source-file src="src/android/pf.lmk.arm.E.bin" target-dir="assets" />
+    <!-- <source-file src="src/android/FacePassAndroidSDK.aar" target-dir="src/pluginid/CordovaFacePlugin" /> -->
+    <!-- <lib-file src="src/android/FacePassAndroidSDK.aar"/> -->
+</platform>
+</plugin>
