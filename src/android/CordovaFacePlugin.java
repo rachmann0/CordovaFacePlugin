@@ -10,11 +10,15 @@ import org.json.JSONObject;
 import android.content.ContextWrapper;
 import android.app.Activity;
 import android.Manifest;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Build;
 import android.content.pm.PackageManager;
 import android.content.Context;
+import android.telecom.Call;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 
 import java.io.IOException;
@@ -49,38 +53,42 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if (action.equals("coolMethod")) {
-            // String message = args.getString(0);
-            // this.coolMethod(message, callbackContext);
-
-            int arg1 = args.getInt(0);
-            int arg2 = args.getInt(1);
-
-            int sum = arg1 + arg2;
-
-            if (!hasPermission()) {
-                requestPermission();
-            } else {
-                try {
-                    initFacePassSDK();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            initFaceHandler(callbackContext);
-            // callbackContext.success(FacePassHandler.getVersion());
+        if (action.equals("initializeSDK")) {
+            this.initializeSDK(callbackContext);
+            return true;
+        }
+        if (action.equals("createGroup")) {
+            String groupName = args.getString(0);
+            createGroup(groupName, callbackContext);
+            return true;
+        }
+        if (action.equals("addFace")) {
+            String bitmapBase64 = args.getString(0);
+            addFace(bitmapBase64, callbackContext);
+            return true;
+        }
+        if (action.equals("bindGroupFaceToken")) {
+            String groupName = args.getString(0);
+            String faceTokenStr = args.getString(1);
+            bindGroupFaceToken(groupName, faceTokenStr, callbackContext);
             return true;
         }
         return false;
     }
 
-    private void coolMethod(String message, CallbackContext callbackContext) {
-        if (message != null && message.length() > 0) {
-            callbackContext.success(message);
+    private void initializeSDK(CallbackContext callbackContext) {
+        if (!hasPermission()) {
+            requestPermission();
         } else {
-            callbackContext.error("Expected one non-empty string argument.");
+            try {
+                initFacePassSDK();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
+        initFaceHandler(callbackContext);
+        //callbackContext.error("Expected one non-empty string argument.");
     }
 
     private static final String TAG = "MyActivity";
@@ -300,10 +308,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
                             addFaceConfig.rcAttributeAndOcclusionMode = 2;
                             mFacePassHandler.setAddFaceConfig(addFaceConfig);
 
-/*
                             checkGroup();
-*/
-
 
 
 
@@ -311,7 +316,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
                             e.printStackTrace();
 //                            Log.d(DEBUG_TAG, "FacePassHandler is null");
                             // Log.d(DEBUG_TAG, "FacePassHandler is null: " + e.getMessage());
-                            callbackContext.success("FacePassHandler is null: " + e.getMessage());
+                            callbackContext.error("FacePassHandler is null: " + e.getMessage());
                             return;
                         }
                         // Log.d(DEBUG_TAG, "SDK successfully initialized");
@@ -327,6 +332,117 @@ public class CordovaFacePlugin extends CordovaPlugin {
                 }
             }
         }.start();
+    }
+
+    private boolean isLocalGroupExist = false;
+    private static final String group_name = "facepass";
+    private void checkGroup() {
+        Log.d(DEBUG_TAG, "checkGroup");
+        if (mFacePassHandler == null) {
+            return;
+        }
+        try {
+            String[] localGroups = mFacePassHandler.getLocalGroups();
+            isLocalGroupExist = false;
+            if (localGroups == null || localGroups.length == 0) {
+                Log.d(DEBUG_TAG, group_name);
+                return;
+            }
+            for (String group : localGroups) {
+                if (group_name.equals(group)) {
+                    isLocalGroupExist = true;
+                }
+            }
+            if (!isLocalGroupExist) {
+                Log.d(DEBUG_TAG, group_name);
+            }
+        } catch (FacePassException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void createGroup(String groupName, CallbackContext callbackContext) {
+        if (mFacePassHandler == null) {
+            Log.d(DEBUG_TAG, "FacePassHandle is null ! ");
+            return;
+        }
+        if (TextUtils.isEmpty(groupName)) {
+            Log.d(DEBUG_TAG,"please input group name ！");
+            return;
+        }
+        boolean isSuccess = false;
+        try {
+            isSuccess = mFacePassHandler.createLocalGroup(groupName);
+        } catch (FacePassException e) {
+            e.printStackTrace();
+        }
+        Log.d(DEBUG_TAG,"create group " + isSuccess);
+        callbackContext.success("create group " + groupName + " " + isSuccess);
+        if (isSuccess && group_name.equals(groupName)) {
+            isLocalGroupExist = true;
+        }
+
+    }
+
+    private static byte[] faceToken;
+    public void addFace(String bitmapBase64, CallbackContext callbackContext) {
+        byte[] decodedString = Base64.decode(bitmapBase64, Base64.DEFAULT);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+        if (mFacePassHandler == null) {
+            Log.d(DEBUG_TAG,"FacePassHandle is null !");
+            callbackContext.error("FacePassHandle is null !");
+            return;
+        }
+
+        try {
+            FacePassAddFaceResult result = mFacePassHandler.addFace(bitmap);
+            if (result != null) {
+                if (result.result == 0) {
+                    android.util.Log.d("qujiaqi", "result:" + result
+                            + ",bl:" + result.blur
+                            + ",pp:" + result.pose.pitch
+                            + ",pr:" + result.pose.roll
+                            + ",py" + result.pose.yaw);
+                    callbackContext.success(new String(result.faceToken));
+                    faceToken = result.faceToken;
+                    Log.d(DEBUG_TAG, "add face successfully! ");
+                    Log.d(DEBUG_TAG, new String(result.faceToken));
+
+                } else if (result.result == 1) {
+                    callbackContext.success("no face ！");
+                } else {
+                    callbackContext.success("quality problem！");
+                }
+            }
+        } catch (FacePassException e) {
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+        }
+    }
+
+    public void bindGroupFaceToken(String groupName, String faceTokenStr, CallbackContext callbackContext) {
+        byte[] faceToken = faceTokenStr.getBytes();
+
+        if (mFacePassHandler == null) {
+            callbackContext.error("FacePassHandle is null ! ");
+            return;
+        }
+
+        if (faceToken == null || faceToken.length == 0 || TextUtils.isEmpty(groupName)) {
+            callbackContext.error("params error！");
+            return;
+        }
+        try {
+            boolean b = mFacePassHandler.bindGroup(groupName, faceToken);
+            String result = b ? "success " : "failed";
+            callbackContext.success("bind  " + result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            callbackContext.error(e.getMessage());
+        }
+
+
     }
 
 }
