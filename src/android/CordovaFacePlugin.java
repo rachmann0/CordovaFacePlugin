@@ -20,8 +20,10 @@ import android.telecom.Call;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import mcv.facepass.FacePassException;
 import mcv.facepass.FacePassHandler;
@@ -76,7 +78,15 @@ public class CordovaFacePlugin extends CordovaPlugin {
         return false;
     }
 
+    ArrayBlockingQueue<RecognizeData> mRecognizeDataQueue;
     private void initializeSDK(CallbackContext callbackContext) {
+
+/*
+        mImageCache = new FaceImageCache();
+*/
+        mRecognizeDataQueue = new ArrayBlockingQueue<RecognizeData>(5);
+        mFeedFrameQueue = new ArrayBlockingQueue<CameraPreviewData>(1);
+
         if (!hasPermission()) {
             requestPermission();
         } else {
@@ -89,7 +99,40 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
         initFaceHandler(callbackContext);
         //callbackContext.error("Expected one non-empty string argument.");
+
+        mRecognizeThread = new RecognizeThread();
+        mRecognizeThread.start();
+        mFeedFrameThread = new FeedFrameThread();
+        mFeedFrameThread.start();
     }
+    RecognizeThread mRecognizeThread;
+    FeedFrameThread mFeedFrameThread;
+    ArrayBlockingQueue<CameraPreviewData> mFeedFrameQueue;
+    public class CameraPreviewData {
+        public byte[] nv21Data;
+
+        public int width;
+
+        public int height;
+
+        public int rotation;
+
+        public boolean mirror;
+
+        public CameraPreviewData(byte[] nv21Data, int width, int height, int rotation, boolean mirror) {
+            super();
+            this.nv21Data = nv21Data;
+            this.width = width;
+            this.height = height;
+            this.rotation = rotation;
+            this.mirror = mirror;
+        }
+    }
+    private enum FacePassSDKMode {
+        MODE_ONLINE,
+        MODE_OFFLINE
+    }
+    private static FacePassSDKMode SDK_MODE = FacePassSDKMode.MODE_OFFLINE;
 
     private static final String TAG = "MyActivity";
     private static final String DEBUG_TAG = "FacePassDemo";
@@ -108,25 +151,23 @@ public class CordovaFacePlugin extends CordovaPlugin {
     private static final String PERMISSION_READ_STORAGE = Manifest.permission.READ_MEDIA_IMAGES;
     private static final String PERMISSION_INTERNET = Manifest.permission.INTERNET;
     private static final String PERMISSION_ACCESS_NETWORK_STATE = Manifest.permission.ACCESS_NETWORK_STATE;
+/*
     private String[] Permission = new String[]{PERMISSION_CAMERA, PERMISSION_WRITE_STORAGE, PERMISSION_READ_STORAGE, PERMISSION_INTERNET, PERMISSION_ACCESS_NETWORK_STATE};
+*/
+    private String[] Permission = new String[]{PERMISSION_CAMERA, PERMISSION_INTERNET, PERMISSION_ACCESS_NETWORK_STATE};
 
     /* SDK 实例对象 */
     FacePassHandler mFacePassHandler;
 
     private boolean hasPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return true;
-/*
-            return checkSelfPermission(PERMISSION_CAMERA) == PackageManager.PERMISSION_GRANTED &&
-*/
+            return cordova.getActivity().checkSelfPermission(PERMISSION_CAMERA) == PackageManager.PERMISSION_GRANTED &&
 /*
                     checkSelfPermission(PERMISSION_READ_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                     checkSelfPermission(PERMISSION_WRITE_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-*//*
-
-                    checkSelfPermission(PERMISSION_INTERNET) == PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(PERMISSION_ACCESS_NETWORK_STATE) == PackageManager.PERMISSION_GRANTED;
 */
+                    cordova.getActivity().checkSelfPermission(PERMISSION_INTERNET) == PackageManager.PERMISSION_GRANTED &&
+                    cordova.getActivity().checkSelfPermission(PERMISSION_ACCESS_NETWORK_STATE) == PackageManager.PERMISSION_GRANTED;
         } else {
             return true;
         }
@@ -445,4 +486,254 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
     }
 
+    public class RecognizeData {
+        public byte[] message;
+        public FacePassTrackOptions[] trackOpt;
+
+        public RecognizeData(byte[] message) {
+            this.message = message;
+            this.trackOpt = null;
+        }
+
+        public RecognizeData(byte[] message, FacePassTrackOptions[] opt) {
+            this.message = message;
+            this.trackOpt = opt;
+        }
+    }
+    private class RecognizeThread extends Thread {
+
+        boolean isInterrupt;
+
+        @Override
+        public void run() {
+            while (!isInterrupt) {
+                try {
+                    RecognizeData recognizeData = mRecognizeDataQueue.take();
+                    FacePassAgeGenderResult[] ageGenderResult = null;
+                    //if (ageGenderEnabledGlobal) {
+                    //    ageGenderResult = mFacePassHandler.getAgeGender(detectionResult);
+                    //    for (FacePassAgeGenderResult t : ageGenderResult) {
+                    //        Log.e("FacePassAgeGenderResult", "id " + t.trackId + " age " + t.age + " gender " + t.gender);
+                    //    }
+                    //}
+
+                    if (isLocalGroupExist) {
+                        Log.d(DEBUG_TAG, "RecognizeData >>>>");
+
+                        FacePassRecognitionResult[][] recognizeResultArray = mFacePassHandler.recognize(group_name, recognizeData.message, 1, recognizeData.trackOpt);
+                        if (recognizeResultArray != null && recognizeResultArray.length > 0) {
+                            for (FacePassRecognitionResult[] recognizeResult : recognizeResultArray) {
+                                if (recognizeResult != null && recognizeResult.length > 0) {
+                                    for (FacePassRecognitionResult result : recognizeResult) {
+                                        String faceToken = new String(result.faceToken);
+                                        if (FacePassRecognitionState.RECOGNITION_PASS == result.recognitionState) {
+                                            getFaceImageByFaceToken(result.trackId, faceToken);
+                                            Log.i(DEBUG_TAG, "SUCCESSFULLY RECOGNIZED");
+                                        } else {
+                                            Log.i(DEBUG_TAG, "FAILED TO RECOGNIZE");
+                                        }
+                                        int idx = findidx(ageGenderResult, result.trackId);
+                                        if (idx == -1) {
+/*
+                                            showRecognizeResult(result.trackId, result.detail.searchScore, result.detail.livenessScore, !TextUtils.isEmpty(faceToken));
+*/
+                                        } else {
+/*
+                                            showRecognizeResult(result.trackId, result.detail.searchScore, result.detail.livenessScore, !TextUtils.isEmpty(faceToken), ageGenderResult[idx].age, ageGenderResult[idx].gender);
+*/
+                                        }
+
+                                        Log.d(DEBUG_TAG, String.format("recognize trackid: %d, searchScore: %f  searchThreshold: %f, hairType: 0x%x beardType: 0x%x hatType: 0x%x respiratorType: 0x%x glassesType: 0x%x skinColorType: 0x%x",
+                                                result.trackId,
+                                                result.detail.searchScore,
+                                                result.detail.searchThreshold,
+                                                result.detail.rcAttr.hairType.ordinal(),
+                                                result.detail.rcAttr.beardType.ordinal(),
+                                                result.detail.rcAttr.hatType.ordinal(),
+                                                result.detail.rcAttr.respiratorType.ordinal(),
+                                                result.detail.rcAttr.glassesType.ordinal(),
+                                                result.detail.rcAttr.skinColorType.ordinal()));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (FacePassException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        @Override
+        public void interrupt() {
+            isInterrupt = true;
+            super.interrupt();
+        }
+    }
+    int findidx(FacePassAgeGenderResult[] results, long trackId) {
+        int result = -1;
+        if (results == null) {
+            return result;
+        }
+        for (int i = 0; i < results.length; ++i) {
+            if (results[i].trackId == trackId) {
+                return i;
+            }
+        }
+        return result;
+    }
+
+    private void getFaceImageByFaceToken(final long trackId, String faceToken) {
+        if (TextUtils.isEmpty(faceToken)) {
+            return;
+        }
+
+        try {
+            final Bitmap bitmap = mFacePassHandler.getFaceImage(faceToken.getBytes());
+            Log.i(DEBUG_TAG, mFacePassHandler.getFaceImagePath(faceToken.getBytes()));
+/*
+            mAndroidHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(DEBUG_TAG, "getFaceImageByFaceToken cache is null");
+                    showToast("ID = " + String.valueOf(trackId), Toast.LENGTH_SHORT, true, bitmap);
+                }
+            });
+*/
+            if (bitmap != null) {
+                return;
+            }
+        } catch (FacePassException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private int cameraRotation;
+    private static ArrayBlockingQueue<Pair<CameraPreviewData, CameraPreviewData>> complexFrameQueue
+            = new ArrayBlockingQueue<>(2);
+    public static Pair<CameraPreviewData, CameraPreviewData> takeComplexFrame() throws InterruptedException {
+        return complexFrameQueue.take();
+    }
+    private class FeedFrameThread extends Thread {
+        boolean isInterrupt;
+
+        @Override
+        public void run() {
+            while (!isInterrupt) {
+                if (mFacePassHandler == null) {
+                    continue;
+                }
+                /* 将相机预览帧转成SDK算法所需帧的格式 FacePassImage */
+                long startTime = System.currentTimeMillis(); //起始时间
+
+                /* 将每一帧FacePassImage 送入SDK算法， 并得到返回结果 */
+                FacePassDetectionResult detectionResult = null;
+                try {
+                    if (CamType == FacePassCameraType.FACEPASS_DUALCAM) {
+                        Pair<CameraPreviewData, CameraPreviewData> framePair;
+                        try {
+                            framePair = takeComplexFrame();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            continue;
+                        }
+                        FacePassImage imageRGB = new FacePassImage(framePair.first.nv21Data, framePair.first.width, framePair.first.height, cameraRotation, FacePassImageType.NV21);
+                        FacePassImage imageIR = new FacePassImage(framePair.second.nv21Data, framePair.second.width, framePair.second.height, cameraRotation, FacePassImageType.NV21);
+                        detectionResult = mFacePassHandler.feedFrameRGBIR(imageRGB, imageIR);
+                    } else {
+                        CameraPreviewData cameraPreviewData = null;
+                        try {
+                            cameraPreviewData = mFeedFrameQueue.take();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            continue;
+                        }
+                        FacePassImage imageRGB = new FacePassImage(cameraPreviewData.nv21Data, cameraPreviewData.width, cameraPreviewData.height, cameraRotation, FacePassImageType.NV21);
+                        detectionResult = mFacePassHandler.feedFrame(imageRGB);
+                    }
+                } catch (FacePassException e) {
+                    e.printStackTrace();
+                }
+
+                if (detectionResult == null || detectionResult.faceList.length == 0) {
+                    /* 当前帧没有检出人脸 */
+                    cordova.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+/*
+                            faceView.clear();
+                            faceView.invalidate();
+*/
+                        }
+                    });
+                } else {
+                    /* 将识别到的人脸在预览界面中圈出，并在上方显示人脸位置及角度信息 */
+                    final FacePassFace[] bufferFaceList = detectionResult.faceList;
+                    cordova.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+/*
+                            showFacePassFace(bufferFaceList);
+*/
+                        }
+                    });
+                }
+
+                if (SDK_MODE == FacePassSDKMode.MODE_OFFLINE) {
+                    /*离线模式，将识别到人脸的，message不为空的result添加到处理队列中*/
+                    if (detectionResult != null && detectionResult.message.length != 0) {
+                        Log.d(DEBUG_TAG, "mRecognizeDataQueue.offer");
+                        /*所有检测到的人脸框的属性信息*/
+                        for (int i = 0; i < detectionResult.faceList.length; ++i) {
+                            Log.d(DEBUG_TAG, String.format("rc attribute faceList hairType: 0x%x beardType: 0x%x hatType: 0x%x respiratorType: 0x%x glassesType: 0x%x skinColorType: 0x%x",
+                                    detectionResult.faceList[i].rcAttr.hairType.ordinal(),
+                                    detectionResult.faceList[i].rcAttr.beardType.ordinal(),
+                                    detectionResult.faceList[i].rcAttr.hatType.ordinal(),
+                                    detectionResult.faceList[i].rcAttr.respiratorType.ordinal(),
+                                    detectionResult.faceList[i].rcAttr.glassesType.ordinal(),
+                                    detectionResult.faceList[i].rcAttr.skinColorType.ordinal()));
+                        }
+                        Log.d(DEBUG_TAG, "--------------------------------------------------------------------------------------------------------------------------------------------------");
+                        /*送识别的人脸框的属性信息*/
+                        FacePassTrackOptions[] trackOpts = new FacePassTrackOptions[detectionResult.images.length];
+                        for (int i = 0; i < detectionResult.images.length; ++i) {
+                            if (detectionResult.images[i].rcAttr.respiratorType != FacePassRCAttribute.FacePassRespiratorType.INVALID
+                                    && detectionResult.images[i].rcAttr.respiratorType != FacePassRCAttribute.FacePassRespiratorType.NO_RESPIRATOR) {
+                                float searchThreshold = 60f;
+                                float livenessThreshold = 80f; // -1.0f will not change the liveness threshold
+                                float livenessGaThreshold = 85f;
+                                float smallsearchThreshold = -1.0f; // -1.0f will not change the smallsearch threshold
+                                trackOpts[i] = new FacePassTrackOptions(detectionResult.images[i].trackId, searchThreshold, livenessThreshold, livenessGaThreshold, smallsearchThreshold);
+                            }
+                            Log.d(DEBUG_TAG, String.format("rc attribute in FacePassImage, hairType: 0x%x beardType: 0x%x hatType: 0x%x respiratorType: 0x%x glassesType: 0x%x skinColorType: 0x%x",
+                                    detectionResult.images[i].rcAttr.hairType.ordinal(),
+                                    detectionResult.images[i].rcAttr.beardType.ordinal(),
+                                    detectionResult.images[i].rcAttr.hatType.ordinal(),
+                                    detectionResult.images[i].rcAttr.respiratorType.ordinal(),
+                                    detectionResult.images[i].rcAttr.glassesType.ordinal(),
+                                    detectionResult.images[i].rcAttr.skinColorType.ordinal()));
+                        }
+                        RecognizeData mRecData = new RecognizeData(detectionResult.message, trackOpts);
+                        mRecognizeDataQueue.offer(mRecData);
+                    }
+                }
+                long endTime = System.currentTimeMillis(); //结束时间
+                long runTime = endTime - startTime;
+                for (int i = 0; i < detectionResult.faceList.length; ++i) {
+                    Log.i("DEBUG_TAG", "rect[" + i + "] = (" + detectionResult.faceList[i].rect.left + ", " + detectionResult.faceList[i].rect.top + ", " + detectionResult.faceList[i].rect.right + ", " + detectionResult.faceList[i].rect.bottom);
+                }
+                Log.i("]time", String.format("feedframe %d ms", runTime));
+            }
+        }
+
+        @Override
+        public void interrupt() {
+            isInterrupt = true;
+            super.interrupt();
+        }
+    }
+
 }
+

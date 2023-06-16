@@ -25,5 +25,11 @@
     <source-file src="src/android/pf.lmk.arm.E.bin" target-dir="assets" />
     <!-- <source-file src="src/android/FacePassAndroidSDK.aar" target-dir="src/pluginid/CordovaFacePlugin" /> -->
     <!-- <lib-file src="src/android/FacePassAndroidSDK.aar"/> -->
+    <config-file target="AndroidManifest.xml" parent="/*">
+        <uses-permission android:name="android.permission.CAMERA" />
+        <uses-permission android:name="android.permission.INTERNET" />
+        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+        <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    </config-file>
 </platform>
 </plugin>
