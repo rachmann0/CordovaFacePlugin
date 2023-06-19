@@ -84,6 +84,9 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
     ArrayBlockingQueue<RecognizeData> mRecognizeDataQueue;
     private void initializeSDK(CallbackContext callbackContext) {
+        while (true) {
+            callbackContext.success("looping");
+        }
 
 /*
         mImageCache = new FaceImageCache();
