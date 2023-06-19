@@ -362,6 +362,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
                         }
                         // Log.d(DEBUG_TAG, "SDK successfully initialized");
                         callbackContext.success("SDK successfully initialized");
+                        callbackContext.success("SDK successfully initialized");
                         return;
                     }
                     try {
