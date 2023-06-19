@@ -91,26 +91,26 @@ public class CordovaFacePlugin extends CordovaPlugin {
 /*
         mImageCache = new FaceImageCache();
 */
-        mRecognizeDataQueue = new ArrayBlockingQueue<RecognizeData>(5);
-        mFeedFrameQueue = new ArrayBlockingQueue<CameraPreviewData>(1);
+        // mRecognizeDataQueue = new ArrayBlockingQueue<RecognizeData>(5);
+        // mFeedFrameQueue = new ArrayBlockingQueue<CameraPreviewData>(1);
 
-        if (!hasPermission()) {
-            requestPermission();
-        } else {
-            try {
-                initFacePassSDK();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        // if (!hasPermission()) {
+        //     requestPermission();
+        // } else {
+        //     try {
+        //         initFacePassSDK();
+        //     } catch (IOException e) {
+        //         e.printStackTrace();
+        //     }
+        // }
 
-        initFaceHandler(callbackContext);
-        //callbackContext.error("Expected one non-empty string argument.");
+        // initFaceHandler(callbackContext);
+        // //callbackContext.error("Expected one non-empty string argument.");
 
-        mRecognizeThread = new RecognizeThread();
-        mRecognizeThread.start();
-        mFeedFrameThread = new FeedFrameThread();
-        mFeedFrameThread.start();
+        // mRecognizeThread = new RecognizeThread();
+        // mRecognizeThread.start();
+        // mFeedFrameThread = new FeedFrameThread();
+        // mFeedFrameThread.start();
     }
     RecognizeThread mRecognizeThread;
     FeedFrameThread mFeedFrameThread;
