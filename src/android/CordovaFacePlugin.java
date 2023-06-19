@@ -55,6 +55,10 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        if (action.equals("checkPluginAvailable")) {
+            callbackContext.success(true);
+            return true;
+        }
         if (action.equals("initializeSDK")) {
             this.initializeSDK(callbackContext);
             return true;
