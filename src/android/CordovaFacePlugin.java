@@ -113,6 +113,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
         initFaceHandler(callbackContext);
         //callbackContext.error("Expected one non-empty string argument.");
 
+        recognizeThreadCallbackContext = callbackContext;
         mRecognizeThread = new RecognizeThread();
         mRecognizeThread.start();
         mFeedFrameThread = new FeedFrameThread();
@@ -255,6 +256,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
             // 金雅拓授权接口
             boolean auth_status = FacePassHandler.authCheck();
             Log.d(DEBUG_TAG, "FacePassHandler.authCheck(): " + FacePassHandler.authCheck());
+            Log.d(DEBUG_TAG, "FacePassHandler.isAuthorized(): " + FacePassHandler.isAuthorized());
             if ( !auth_status ) {
                 singleCertification(mContext);
                 auth_status = FacePassHandler.authCheck();
@@ -286,7 +288,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
             public void run() {
                 while (true && !cordova.getActivity().isFinishing()) {
 //                while (!isFinishing()) {
-                    Log.d(DEBUG_TAG, "FacePassHandler.isAvailable() = " + String.valueOf(FacePassHandler.isAvailable()));
+                    //Log.d(DEBUG_TAG, "FacePassHandler.isAvailable() = " + String.valueOf(FacePassHandler.isAvailable()));
                     while (FacePassHandler.isAvailable()) {
                         Log.d(DEBUG_TAG, "start to build FacePassHandler");
                         FacePassConfig config;
@@ -516,6 +518,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
             this.trackOpt = opt;
         }
     }
+    public CallbackContext recognizeThreadCallbackContext;
     private class RecognizeThread extends Thread {
 
         boolean isInterrupt;
@@ -545,8 +548,14 @@ public class CordovaFacePlugin extends CordovaPlugin {
                                         if (FacePassRecognitionState.RECOGNITION_PASS == result.recognitionState) {
                                             getFaceImageByFaceToken(result.trackId, faceToken);
                                             Log.i(DEBUG_TAG, "SUCCESSFULLY RECOGNIZED");
+                                            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SUCCESSFULLY RECOGNIZED");
+                                            pluginResult.setKeepCallback(true);
+                                            recognizeThreadCallbackContext.sendPluginResult(pluginResult);
                                         } else {
                                             Log.i(DEBUG_TAG, "FAILED TO RECOGNIZE");
+                                            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SUCCESSFULLY RECOGNIZED");
+                                            pluginResult.setKeepCallback(true);
+                                            recognizeThreadCallbackContext.sendPluginResult(pluginResult);
                                         }
                                         int idx = findidx(ageGenderResult, result.trackId);
                                         if (idx == -1) {
