@@ -270,7 +270,13 @@ public class CordovaFacePlugin extends CordovaPlugin {
                 callbackContext.sendPluginResult(pluginResult);
                 // 授权不成功，根据业务需求处理
                 // ...
-                return ;
+                return;
+            } else {
+                Log.d("mcvsafe", "Authentication result : success.");
+                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "Authentication result : success.");
+                pluginResult.setKeepCallback(true);
+                callbackContext.sendPluginResult(pluginResult);
+                return;
             }
         } else {
             Log.d(DEBUG_TAG, "have no auth.");
@@ -481,11 +487,11 @@ public class CordovaFacePlugin extends CordovaPlugin {
     }
 
     public void bindGroupFaceToken(String groupName, String faceTokenStr, CallbackContext callbackContext) {
-        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, groupName + " " + faceTokenStr);
+        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, groupName + " " + faceTokenStr.tr);
         pluginResult.setKeepCallback(true);
         callbackContext.sendPluginResult(pluginResult);
 
-        byte[] faceToken = faceTokenStr.getBytes();
+        byte[] faceToken = faceTokenStr.trim().getBytes();
 
         if (mFacePassHandler == null) {
             callbackContext.error("FacePassHandle is null ! ");
