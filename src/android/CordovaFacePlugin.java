@@ -481,6 +481,10 @@ public class CordovaFacePlugin extends CordovaPlugin {
     }
 
     public void bindGroupFaceToken(String groupName, String faceTokenStr, CallbackContext callbackContext) {
+        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, groupName + " " + faceTokenStr);
+        pluginResult.setKeepCallback(true);
+        callbackContext.sendPluginResult(pluginResult);
+
         byte[] faceToken = faceTokenStr.getBytes();
 
         if (mFacePassHandler == null) {
