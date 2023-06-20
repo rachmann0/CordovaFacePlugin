@@ -104,7 +104,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
             requestPermission();
         } else {
             try {
-                initFacePassSDK();
+                initFacePassSDK(callbackContext);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -241,7 +241,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
         FACEPASS_AUTH_MCVSAFE
     };
     private static FacePassAuthType authType = FacePassAuthType.FACEPASS_AUTH_MCVSAFE;
-    private void initFacePassSDK() throws IOException {
+    private void initFacePassSDK(CallbackContext callbackContext) throws IOException {
         Log.d(DEBUG_TAG, "initFacePassSDK");
 
         Context mContext = cordova.getContext().getApplicationContext();
