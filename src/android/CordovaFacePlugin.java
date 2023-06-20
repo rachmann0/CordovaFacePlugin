@@ -56,8 +56,12 @@ public class CordovaFacePlugin extends CordovaPlugin {
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         if (action.equals("checkPluginAvailable")) {
-            callbackContext.success("true");
-            return true;
+            PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+            pluginResult.setKeepCallback(true);
+            while (true){
+                callbackContext.success("true");
+            }
+            // return true;
         }
         if (action.equals("initializeSDK")) {
             this.initializeSDK(callbackContext);
@@ -84,33 +88,29 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
     ArrayBlockingQueue<RecognizeData> mRecognizeDataQueue;
     private void initializeSDK(CallbackContext callbackContext) {
-        while (true) {
-            callbackContext.success("looping");
-        }
-
 /*
         mImageCache = new FaceImageCache();
 */
-        // mRecognizeDataQueue = new ArrayBlockingQueue<RecognizeData>(5);
-        // mFeedFrameQueue = new ArrayBlockingQueue<CameraPreviewData>(1);
+        mRecognizeDataQueue = new ArrayBlockingQueue<RecognizeData>(5);
+        mFeedFrameQueue = new ArrayBlockingQueue<CameraPreviewData>(1);
 
-        // if (!hasPermission()) {
-        //     requestPermission();
-        // } else {
-        //     try {
-        //         initFacePassSDK();
-        //     } catch (IOException e) {
-        //         e.printStackTrace();
-        //     }
-        // }
+        if (!hasPermission()) {
+            requestPermission();
+        } else {
+            try {
+                initFacePassSDK();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
-        // initFaceHandler(callbackContext);
-        // //callbackContext.error("Expected one non-empty string argument.");
+        initFaceHandler(callbackContext);
+        //callbackContext.error("Expected one non-empty string argument.");
 
-        // mRecognizeThread = new RecognizeThread();
-        // mRecognizeThread.start();
-        // mFeedFrameThread = new FeedFrameThread();
-        // mFeedFrameThread.start();
+        mRecognizeThread = new RecognizeThread();
+        mRecognizeThread.start();
+        mFeedFrameThread = new FeedFrameThread();
+        mFeedFrameThread.start();
     }
     RecognizeThread mRecognizeThread;
     FeedFrameThread mFeedFrameThread;
