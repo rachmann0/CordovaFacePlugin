@@ -760,6 +760,10 @@ public class CordovaFacePlugin extends CordovaPlugin {
                     Log.i("DEBUG_TAG", "rect[" + i + "] = (" + detectionResult.faceList[i].rect.left + ", " + detectionResult.faceList[i].rect.top + ", " + detectionResult.faceList[i].rect.right + ", " + detectionResult.faceList[i].rect.bottom);
                 }
                 Log.i("]time", String.format("feedframe %d ms", runTime));
+                PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, String.format("feedframe %d ms", runTime));
+                pluginResult.setKeepCallback(true);
+                recognizeThreadCallbackContext.sendPluginResult(pluginResult);
+
             }
         }
 
