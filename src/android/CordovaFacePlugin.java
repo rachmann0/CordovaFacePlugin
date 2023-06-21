@@ -110,6 +110,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
             }
         }
 
+        // initFaceHandler(callbackContext);
         initFaceHandler(callbackContext);
         //callbackContext.error("Expected one non-empty string argument.");
 
