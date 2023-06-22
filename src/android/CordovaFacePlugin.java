@@ -536,9 +536,9 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
         @Override
         public void run() {
-            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "run recognize thread");
-            pluginResult.setKeepCallback(true);
-            recognizeThreadCallbackContext.sendPluginResult(pluginResult);
+            PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "run recognize thread");
+            pluginResultRun.setKeepCallback(true);
+            recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
             while (!isInterrupt) {
                 try {
                     RecognizeData recognizeData = mRecognizeDataQueue.take();
