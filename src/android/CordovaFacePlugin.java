@@ -553,6 +553,9 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
                     if (isLocalGroupExist) {
                         Log.d(DEBUG_TAG, "RecognizeData >>>>");
+                        PluginResult pluginResultLocalGroup = new PluginResult(PluginResult.Status.OK, "isLocalGroupExist");
+                        pluginResultLocalGroup.setKeepCallback(true);
+                        recognizeThreadCallbackContext.sendPluginResult(pluginResultLocalGroup);
 
                         FacePassRecognitionResult[][] recognizeResultArray = mFacePassHandler.recognize(group_name, recognizeData.message, 1, recognizeData.trackOpt);
                         if (recognizeResultArray != null && recognizeResultArray.length > 0) {
