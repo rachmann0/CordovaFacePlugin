@@ -536,11 +536,12 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
         @Override
         public void run() {
-            PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "run recognize thread");
-            pluginResultRun.setKeepCallback(true);
-            recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
             while (!isInterrupt) {
                 try {
+                    PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "run recognize thread: " + mRecognizeDataQueue.isEmpty());
+                    pluginResultRun.setKeepCallback(true);
+                    recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
+
                     RecognizeData recognizeData = mRecognizeDataQueue.take();
                     FacePassAgeGenderResult[] ageGenderResult = null;
                     //if (ageGenderEnabledGlobal) {
