@@ -667,9 +667,9 @@ public class CordovaFacePlugin extends CordovaPlugin {
         @Override
         public void run() {
             while (!isInterrupt) {
-                PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "FeedFrameThread run");
-                pluginResultRun.setKeepCallback(true);
-                recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
+                // PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "FeedFrameThread run");
+                // pluginResultRun.setKeepCallback(true);
+                // recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
 
                 if (mFacePassHandler == null) {
                     continue;
