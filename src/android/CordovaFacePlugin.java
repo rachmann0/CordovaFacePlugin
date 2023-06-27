@@ -115,10 +115,16 @@ public class CordovaFacePlugin extends CordovaPlugin {
         //callbackContext.error("Expected one non-empty string argument.");
 
         recognizeThreadCallbackContext = callbackContext;
+
         mRecognizeThread = new RecognizeThread();
         mRecognizeThread.start();
+
         mFeedFrameThread = new FeedFrameThread();
         mFeedFrameThread.start();
+
+        PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "FeedFrameThread run");
+        pluginResultRun.setKeepCallback(true);
+        recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
     }
     RecognizeThread mRecognizeThread;
     FeedFrameThread mFeedFrameThread;
@@ -531,7 +537,6 @@ public class CordovaFacePlugin extends CordovaPlugin {
     }
     public CallbackContext recognizeThreadCallbackContext;
     private class RecognizeThread extends Thread {
-
         boolean isInterrupt;
 
         @Override
