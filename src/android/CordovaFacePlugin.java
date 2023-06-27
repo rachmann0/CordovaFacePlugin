@@ -571,7 +571,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
                                             recognizeThreadCallbackContext.sendPluginResult(pluginResult);
                                         } else {
                                             Log.i(DEBUG_TAG, "FAILED TO RECOGNIZE");
-                                            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "SUCCESSFULLY RECOGNIZED");
+                                            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "FAILED TO RECOGNIZE");
                                             pluginResult.setKeepCallback(true);
                                             recognizeThreadCallbackContext.sendPluginResult(pluginResult);
                                         }
@@ -664,6 +664,10 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
         @Override
         public void run() {
+            PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "FeedFrameThread run");
+            pluginResultRun.setKeepCallback(true);
+            recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
+
             while (!isInterrupt) {
                 if (mFacePassHandler == null) {
                     continue;
