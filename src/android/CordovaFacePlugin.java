@@ -116,11 +116,11 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
         recognizeThreadCallbackContext = callbackContext;
 
-        mRecognizeThread = new RecognizeThread();
-        mRecognizeThread.start();
-
         mFeedFrameThread = new FeedFrameThread();
         mFeedFrameThread.start();
+
+        mRecognizeThread = new RecognizeThread();
+        mRecognizeThread.start();
 
         PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "FeedFrameThread run");
         pluginResultRun.setKeepCallback(true);
