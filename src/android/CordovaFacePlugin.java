@@ -47,7 +47,7 @@ import mcv.facepass.types.FacePassAgeGenderResult;
 import mcv.facepass.types.FacePassRecognitionState;
 import mcv.facepass.types.FacePassTrackOptions;
 import pluginid.Camera.CameraManager;
-
+import pluginid.Camera.CameraPreviewData;
 
 
 /**
