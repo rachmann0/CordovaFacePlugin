@@ -46,13 +46,25 @@ import mcv.facepass.types.FacePassRecognitionResult;
 import mcv.facepass.types.FacePassAgeGenderResult;
 import mcv.facepass.types.FacePassRecognitionState;
 import mcv.facepass.types.FacePassTrackOptions;
+import pluginid.Camera.CameraManager.CameraListener;
 
 
 
 /**
  * This class echoes a string called from JavaScript.
  */
-public class CordovaFacePlugin extends CordovaPlugin {
+public class CordovaFacePlugin extends CordovaPlugin implements CameraManager.CameraListener{
+    /* Camera callback function */
+    @Override
+    public void onPictureTaken(CameraPreviewData cameraPreviewData) {
+        if (CamType == FacePassCameraType.FACEPASS_DUALCAM) {
+            //ComplexFrameHelper.addRgbFrame(cameraPreviewData);
+        } else {
+            Log.d(DEBUG_TAG, "onPictureTaken");
+            mFeedFrameQueue.offer(cameraPreviewData);
+        }
+    }
+
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -126,26 +138,6 @@ public class CordovaFacePlugin extends CordovaPlugin {
     RecognizeThread mRecognizeThread;
     FeedFrameThread mFeedFrameThread;
     ArrayBlockingQueue<CameraPreviewData> mFeedFrameQueue;
-    public class CameraPreviewData {
-        public byte[] nv21Data;
-
-        public int width;
-
-        public int height;
-
-        public int rotation;
-
-        public boolean mirror;
-
-        public CameraPreviewData(byte[] nv21Data, int width, int height, int rotation, boolean mirror) {
-            super();
-            this.nv21Data = nv21Data;
-            this.width = width;
-            this.height = height;
-            this.rotation = rotation;
-            this.mirror = mirror;
-        }
-    }
     private enum FacePassSDKMode {
         MODE_ONLINE,
         MODE_OFFLINE
