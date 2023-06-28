@@ -1,4 +1,4 @@
-package pluginid.CordovaFacePlugin;
+package pluginid;
 
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
