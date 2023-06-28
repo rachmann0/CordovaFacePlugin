@@ -7,7 +7,7 @@
     <!-- <source-file src="src/android/CameraManager.java" target-dir="src/pluginid/Camera" /> -->
     <!-- <source-file src="src/android/CameraPreview.java" target-dir="src/pluginid/Camera" /> -->
     <!-- <source-file src="src/android/CameraPreviewData.java" target-dir="src/pluginid/Camera" /> -->
-    <source-file src="src/android/SettingVar.java" target-dir="src/pluginid/CordovaFacePlugin" />
+    <source-file src="SettingVar.java" target-dir="src/pluginid/Camera" />
 
     <source-file src="src/android/FacePassAndroidSDK.aar" target-dir="libs" />
 
