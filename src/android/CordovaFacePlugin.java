@@ -13,6 +13,12 @@ import android.app.Activity;
 import android.Manifest;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.content.res.Configuration;
+import android.content.SharedPreferences;
+import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
+import android.opengl.GLES32;
 import android.os.Bundle;
 import android.os.Build;
 import android.content.pm.PackageManager;
@@ -22,6 +28,9 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.util.Pair;
+import android.view.WindowManager;
+
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -48,22 +57,28 @@ import mcv.facepass.types.FacePassRecognitionState;
 import mcv.facepass.types.FacePassTrackOptions;
 import pluginid.Camera.CameraManager;
 import pluginid.Camera.CameraPreviewData;
-
+import pluginid.Camera.SettingVar;
 
 /**
  * This class echoes a string called from JavaScript.
  */
-public class CordovaFacePlugin extends CordovaPlugin implements CameraManager.CameraListener{
-    /* Camera callback function */
+//public class CordovaFacePlugin extends CordovaPlugin implements CameraManager.CameraListener{
+public class CordovaFacePlugin extends CordovaPlugin {
+    private CameraManager manager;
+/*
+    */
+/* Camera callback function *//*
+
     @Override
     public void onPictureTaken(CameraPreviewData cameraPreviewData) {
+        Log.d(DEBUG_TAG, "onPictureTaken");
         if (CamType == FacePassCameraType.FACEPASS_DUALCAM) {
             //ComplexFrameHelper.addRgbFrame(cameraPreviewData);
         } else {
-            Log.d(DEBUG_TAG, "onPictureTaken");
             mFeedFrameQueue.offer(cameraPreviewData);
         }
     }
+*/
 
 
     @Override
@@ -105,13 +120,61 @@ public class CordovaFacePlugin extends CordovaPlugin implements CameraManager.Ca
     }
 
     ArrayBlockingQueue<RecognizeData> mRecognizeDataQueue;
+    private static boolean cameraFacingFront = true;
+    int screenState = 0;// 0 横 1 竖
+    private void initView() {
+        int windowRotation = ((WindowManager) (cordova.getContext().getApplicationContext().getSystemService(Context.WINDOW_SERVICE))).getDefaultDisplay().getRotation() * 90;
+        if (windowRotation == 0) {
+            cameraRotation = FacePassImageRotation.DEG90;
+        } else if (windowRotation == 90) {
+            cameraRotation = FacePassImageRotation.DEG0;
+        } else if (windowRotation == 270) {
+            cameraRotation = FacePassImageRotation.DEG180;
+        } else {
+            cameraRotation = FacePassImageRotation.DEG270;
+        }
+        Log.i(DEBUG_TAG, "Rotation: cameraRation: " + cameraRotation);
+        cameraFacingFront = true;
+        SharedPreferences preferences = cordova.getContext().getSharedPreferences(SettingVar.SharedPrefrence, Context.MODE_PRIVATE);
+        SettingVar.isSettingAvailable = preferences.getBoolean("isSettingAvailable", SettingVar.isSettingAvailable);
+        SettingVar.isCross = preferences.getBoolean("isCross", SettingVar.isCross);
+        SettingVar.faceRotation = preferences.getInt("faceRotation", SettingVar.faceRotation);
+        SettingVar.cameraPreviewRotation = preferences.getInt("cameraPreviewRotation", SettingVar.cameraPreviewRotation);
+        SettingVar.cameraFacingFront = preferences.getBoolean("cameraFacingFront", SettingVar.cameraFacingFront);
+        if (SettingVar.isSettingAvailable) {
+            cameraRotation = SettingVar.faceRotation;
+            cameraFacingFront = SettingVar.cameraFacingFront;
+        }
+
+        Log.i(DEBUG_TAG, "Rotation: screenRotation: " + String.valueOf(windowRotation));
+        Log.i(DEBUG_TAG, "Rotation: faceRotation: " + SettingVar.faceRotation);
+        Log.i(DEBUG_TAG, "Rotation: new cameraRation: " + cameraRotation);
+        final int mCurrentOrientation = cordova.getContext().getResources().getConfiguration().orientation;
+
+        if (mCurrentOrientation == Configuration.ORIENTATION_PORTRAIT) {
+            screenState = 1;
+        } else if (mCurrentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            screenState = 0;
+        }
+        //cordova.getActivity().setContentView(R.layout.activity_main);
+
+        SettingVar.cameraSettingOk = false;
+        //manager = new CameraManager();
+        //cameraView = (CameraPreview) findViewById(R.id.preview);
+        //manager.setPreviewDisplay(cameraView);
+        /* 注册相机回调函数 */
+        //manager.setListener(this);
+    }
+
     private void initializeSDK(CallbackContext callbackContext) {
+        Log.d(DEBUG_TAG, "initializeSDK: ");
 /*
         mImageCache = new FaceImageCache();
 */
         mRecognizeDataQueue = new ArrayBlockingQueue<RecognizeData>(5);
         mFeedFrameQueue = new ArrayBlockingQueue<CameraPreviewData>(1);
 
+        //initView();
         if (!hasPermission()) {
             requestPermission();
         } else {
@@ -239,8 +302,6 @@ public class CordovaFacePlugin extends CordovaPlugin implements CameraManager.Ca
     };
     private static FacePassAuthType authType = FacePassAuthType.FACEPASS_AUTH_MCVSAFE;
     private void initFacePassSDK(CallbackContext callbackContext) throws IOException {
-        Log.d(DEBUG_TAG, "initFacePassSDK");
-
         Context mContext = cordova.getContext().getApplicationContext();
         FacePassHandler.initSDK(mContext);
         if (authType == FacePassAuthType.FASSPASS_AUTH_MCVFACE) {
@@ -653,19 +714,47 @@ public class CordovaFacePlugin extends CordovaPlugin implements CameraManager.Ca
     public static Pair<CameraPreviewData, CameraPreviewData> takeComplexFrame() throws InterruptedException {
         return complexFrameQueue.take();
     }
+    protected boolean front = false;
+    private int previewDegreen = 0;
     private class FeedFrameThread extends Thread {
         boolean isInterrupt;
 
         @Override
         public void run() {
             while (!isInterrupt) {
+                if (mFacePassHandler == null) {
+                    continue;
+                }
+
+                Camera mCamera = Camera.open();
+                try {
+                    mCamera.setPreviewTexture(new SurfaceTexture(10));
+                } catch (IOException e1) {
+                    Log.e(DEBUG_TAG, e1.getMessage());
+                }
+
+                Camera.Parameters params = mCamera.getParameters();
+                params.setPreviewSize(640, 480);
+                params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                params.setPictureFormat(ImageFormat.JPEG);
+                mCamera.setParameters(params);
+                mCamera.startPreview();
+                mCamera.takePicture(null, null, null, new Camera.PictureCallback() {
+                    @Override
+                    public void onPictureTaken(byte[] data, Camera camera) {
+                        Log.i(DEBUG_TAG, "picture-taken");
+/*
+                        cameraPreviewData = new CameraPreviewData(data, 640, 480,
+                                previewDegreen, front););
+*/
+                        CameraPreviewData cameraPreviewData = new CameraPreviewData(data, 640,480, previewDegreen, front);
+                        mFeedFrameQueue.offer(cameraPreviewData);
+                    }
+                });
                 // PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "FeedFrameThread run");
                 // pluginResultRun.setKeepCallback(true);
                 // recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
 
-                if (mFacePassHandler == null) {
-                    continue;
-                }
                 /* 将相机预览帧转成SDK算法所需帧的格式 FacePassImage */
                 long startTime = System.currentTimeMillis(); //起始时间
 
