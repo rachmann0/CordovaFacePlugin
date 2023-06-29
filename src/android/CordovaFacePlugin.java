@@ -743,6 +743,9 @@ public class CordovaFacePlugin extends CordovaPlugin {
                     @Override
                     public void onPictureTaken(byte[] data, Camera camera) {
                         Log.i(DEBUG_TAG, "picture-taken");
+                        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "picture-taken");
+                        pluginResult.setKeepCallback(true);
+                        recognizeThreadCallbackContext.sendPluginResult(pluginResult);
 /*
                         cameraPreviewData = new CameraPreviewData(data, 640, 480,
                                 previewDegreen, front););
