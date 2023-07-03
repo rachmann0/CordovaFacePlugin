@@ -726,9 +726,9 @@ public class CordovaFacePlugin extends CordovaPlugin {
                     continue;
                 }
 
-                PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "picture-taken");
-                pluginResultRun.setKeepCallback(true);
-                recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
+                // PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "picture-taken");
+                // pluginResultRun.setKeepCallback(true);
+                // recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
                 Camera mCamera = Camera.open();
                 try {
                     mCamera.setPreviewTexture(new SurfaceTexture(10));
