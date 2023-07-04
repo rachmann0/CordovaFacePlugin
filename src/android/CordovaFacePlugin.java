@@ -4,6 +4,9 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 
+import com.ys.rkapi.GPIOManager;
+import com.ys.rkapi.MyManager;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -83,6 +86,22 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        if (action.equals("initGPIOManager")) {
+            this.initGPIOManager(callbackContext);
+            return true;
+        }
+        if (action.equals("getRelayStatus")) {
+            this.getRelayStatus(callbackContext);
+            return true;
+        }
+        if (action.equals("pullUpRelay")) {
+            this.pullUpRelay(callbackContext);
+            return true;
+        }
+        if (action.equals("pullDownRelay")) {
+            this.pullDownRelay(callbackContext);
+            return true;
+        }
         if (action.equals("checkPluginAvailable")) {
             PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "message");
             pluginResult.setKeepCallback(true);
@@ -117,6 +136,26 @@ public class CordovaFacePlugin extends CordovaPlugin {
             return true;
         }
         return false;
+    }
+
+    private GPIOManager gpioManager;
+    private MyManager myManager;
+    private void initGPIOManager(CallbackContext callbackContext) {
+        myManager = MyManager.getInstance(cordova.getContext());
+        //gpioManager = GPIOManager.getInstance(cordova.getContext());
+        gpioManager = myManager.getGpioManager();
+        callbackContext.success("success, API Version: " + myManager.getApiVersion());
+    }
+    private void getRelayStatus(CallbackContext callbackContext) {
+        callbackContext.success(gpioManager.getRelayStatus());
+    }
+    private void pullUpRelay(CallbackContext callbackContext) {
+        gpioManager.pullUpRelay();
+        callbackContext.success(gpioManager.getRelayStatus());
+    }
+    private void pullDownRelay(CallbackContext callbackContext) {
+        gpioManager.pullDownRelay();
+        callbackContext.success(gpioManager.getRelayStatus());
     }
 
     ArrayBlockingQueue<RecognizeData> mRecognizeDataQueue;
