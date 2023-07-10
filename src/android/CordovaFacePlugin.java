@@ -777,8 +777,8 @@ public class CordovaFacePlugin extends CordovaPlugin {
 
                 Camera.Parameters params = mCamera.getParameters();
                 params.setPreviewSize(640, 480);
-                //params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-                params.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
+                params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                //params.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
                 params.setPictureFormat(ImageFormat.JPEG);
                 mCamera.setParameters(params);
                 mCamera.startPreview();
