@@ -772,41 +772,43 @@ public class CordovaFacePlugin extends CordovaPlugin {
                 // PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "picture-taken");
                 // pluginResultRun.setKeepCallback(true);
                 // recognizeThreadCallbackContext.sendPluginResult(pluginResultRun);
-//                 Camera mCamera = Camera.open();
-//                 try {
-//                     mCamera.setPreviewTexture(new SurfaceTexture(10));
-//                 } catch (IOException e1) {
-//                     Log.e(DEBUG_TAG, e1.getMessage());
-//                 }
-
-//                 Camera.Parameters params = mCamera.getParameters();
-//                 params.setPreviewSize(640, 480);
-//                 params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-//                 //params.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
-//                 //params.setPictureFormat(ImageFormat.JPEG);
-//                 params.setPreviewFormat(ImageFormat.NV21);
-//                 mCamera.setParameters(params);
-//                 mCamera.startPreview();
-//                 mCamera.takePicture(null, null, null, new Camera.PictureCallback() {
-//                     @Override
-//                     public void onPictureTaken(byte[] data, Camera camera) {
-//                         Log.i(DEBUG_TAG, "picture-taken");
-//                         PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "picture-taken");
-//                         pluginResult.setKeepCallback(true);
-//                         recognizeThreadCallbackContext.sendPluginResult(pluginResult);
-// /*
-//                         cameraPreviewData = new CameraPreviewData(data, 640, 480,
-//                                 previewDegreen, front););
-// */
-//                         CameraPreviewData cameraPreviewData = new CameraPreviewData(data, 640,480, previewDegreen, front);
-//                         mFeedFrameQueue.offer(cameraPreviewData);
-//                     }
-//                 });
-
-                if (faceData != null) {
-                CameraPreviewData cameraPreviewData1 = new CameraPreviewData(faceData, 1700,2267, previewDegreen, front);
-                mFeedFrameQueue.offer(cameraPreviewData1);
+                Camera mCamera = Camera.open();
+                try {
+                    mCamera.setPreviewTexture(new SurfaceTexture(10));
+                } catch (IOException e1) {
+                    Log.e(DEBUG_TAG, e1.getMessage());
                 }
+
+                Camera.Parameters params = mCamera.getParameters();
+                params.setPreviewSize(640, 480);
+                params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                //params.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
+                //params.setPictureFormat(ImageFormat.JPEG);
+                params.setPreviewFormat(ImageFormat.NV21);
+                mCamera.setParameters(params);
+                mCamera.startPreview();
+                Camera.PictureCallback pictureCallback =  new Camera.PictureCallback() {
+                    @Override
+                    public void onPictureTaken(byte[] data, Camera camera) {
+                        Log.i(DEBUG_TAG, "picture-taken");
+                        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "picture-taken");
+                        pluginResult.setKeepCallback(true);
+                        recognizeThreadCallbackContext.sendPluginResult(pluginResult);
+ /*
+                         cameraPreviewData = new CameraPreviewData(data, 640, 480,
+                                 previewDegreen, front););
+ */
+                        CameraPreviewData cameraPreviewData = new CameraPreviewData(data, 640, 480, previewDegreen, front);
+                        mFeedFrameQueue.offer(cameraPreviewData);
+                    }
+                 };
+                 mCamera.takePicture(null, pictureCallback, null);
+
+
+                // if (faceData != null) {
+                // CameraPreviewData cameraPreviewData1 = new CameraPreviewData(faceData, 1700,2267, previewDegreen, front);
+                // mFeedFrameQueue.offer(cameraPreviewData1);
+                // }
 
                 // PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "FeedFrameThread run");
                 // pluginResultRun.setKeepCallback(true);
