@@ -803,8 +803,10 @@ public class CordovaFacePlugin extends CordovaPlugin {
 //                     }
 //                 });
 
+                if (faceData.length != 0) {
                 CameraPreviewData cameraPreviewData1 = new CameraPreviewData(faceData, 1700,2267, previewDegreen, front);
                 mFeedFrameQueue.offer(cameraPreviewData1);
+                }
 
                 // PluginResult pluginResultRun = new PluginResult(PluginResult.Status.OK, "FeedFrameThread run");
                 // pluginResultRun.setKeepCallback(true);
