@@ -803,7 +803,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
 //                     }
 //                 });
 
-                if (faceData.length != 0) {
+                if (faceData != null) {
                 CameraPreviewData cameraPreviewData1 = new CameraPreviewData(faceData, 1700,2267, previewDegreen, front);
                 mFeedFrameQueue.offer(cameraPreviewData1);
                 }
