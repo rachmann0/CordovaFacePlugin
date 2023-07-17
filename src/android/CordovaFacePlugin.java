@@ -802,7 +802,8 @@ public class CordovaFacePlugin extends CordovaPlugin {
                         mFeedFrameQueue.offer(cameraPreviewData);
                     }
                  };
-                 mCamera.takePicture(null, pictureCallback, null);
+                //mCamera.takePicture(null, pictureCallback, null);
+                mCamera.takePicture(null, null, pictureCallback);
 
 
                 // if (faceData != null) {
