@@ -780,7 +780,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
                 }
 
                 Camera.Parameters params = mCamera.getParameters();
-                params.setPreviewSize(640, 480);
+                params.setPreviewSize(1280, 720);
                 params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
                 //params.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
                 //params.setPictureFormat(ImageFormat.JPEG);
@@ -798,7 +798,7 @@ public class CordovaFacePlugin extends CordovaPlugin {
                          cameraPreviewData = new CameraPreviewData(data, 640, 480,
                                  previewDegreen, front););
  */
-                        CameraPreviewData cameraPreviewData = new CameraPreviewData(data, 640, 480, previewDegreen, front);
+                        CameraPreviewData cameraPreviewData = new CameraPreviewData(data, 1280, 720, previewDegreen, front);
                         mFeedFrameQueue.offer(cameraPreviewData);
                     }
                  };
